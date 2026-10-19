@@ -3,11 +3,12 @@ import type { SkillDiscoverySource } from './skills'
 import {
   getAgentSlashCommands,
   type NativeChatCommandReply,
+  type NativeChatSkillPrefix,
   type SlashCommandSuggestion
 } from './native-chat-slash-commands'
 
 export type NativeChatAgentProfile = {
-  skillPrefix: '$' | '/'
+  skillPrefix: NativeChatSkillPrefix
   /** OpenClaude reads Claude-owned roots, so this can differ from the agent. */
   skillSourceOwner: AgentType
   /** Another agent whose own skill folders, though not its plugins, this agent also reads. */
@@ -52,6 +53,10 @@ const NATIVE_CHAT_AGENT_PROFILES: Partial<Record<AgentType, NativeChatAgentProfi
   },
   opencode: OPENCODE_PROFILE,
   opencode2: OPENCODE_PROFILE,
+  pi: {
+    skillPrefix: '/skill:',
+    skillSourceOwner: 'pi'
+  },
   grok: {
     skillPrefix: '/',
     skillSourceOwner: 'grok'

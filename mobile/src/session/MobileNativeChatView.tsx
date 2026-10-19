@@ -363,62 +363,72 @@ export function MobileNativeChatView({
 
   return (
     <View style={[styles.root, { paddingBottom: bottomPad }]}>
-      {status === 'loading' && messages.length === 0 ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.textSecondary} />
-        </View>
-      ) : (
-        <GestureHandlerRootView style={styles.listWrap}>
-          <MobileNativeChatDisclosureContext.Provider value={disclosures}>
-            <MobileNativeChatScrollHold headKey={turns.listMessages[0]?.id} listRef={listRef} />
-            <GestureDetector gesture={pinchGesture}>
-              <FlatList
-                ref={listRef}
-                data={history.listRows}
-                keyExtractor={(item) => item.id}
-                renderItem={history.renderListRow}
-                contentContainerStyle={
-                  toolCallCount > 0 ? styles.listContentUnderFloatingControls : styles.listContent
-                }
-                // Let link/file taps land while the composer keyboard is up
-                // instead of being swallowed by the dismiss gesture.
-                keyboardShouldPersistTaps="handled"
-                onScroll={onScroll}
-                onScrollBeginDrag={beginUserScroll}
-                onScrollEndDrag={endUserDrag}
-                onMomentumScrollBegin={beginMomentum}
-                onMomentumScrollEnd={endMomentum}
-                scrollEventThrottle={32}
-                onContentSizeChange={pinToTailAfterContentResize}
-                onLayout={pinToTail}
-                maintainVisibleContentPosition={mobileNativeChatRowAnchor(hasMore === true)}
-                ListHeaderComponent={history.withHistory(
-                  mobileNativeChatListHeader(hasMore, loadingEarlier, loadEarlier)
-                )}
-                ListFooterComponent={mobileNativeChatListFooter(
-                  liveStatus,
-                  turns.waitingRows,
-                  renderItem
-                )}
-                ListEmptyComponent={emptyStateView}
-              />
-            </GestureDetector>
-          </MobileNativeChatDisclosureContext.Provider>
-          <MobileNativeChatFloatingControls
-            toolCallCount={toolCallCount}
-            toolsExpanded={toolsExpanded}
-            onToggleTools={toggleTools}
-            showJumpToTail={showJumpToTail}
-            onJumpToTail={jumpToTail}
-          />
-        </GestureHandlerRootView>
-      )}
-      <MobileNativeChatPromptCard
-        key={promptKey ?? undefined}
-        {...{ ask, askKey, onDismissAsk, onAnswerAsk, onCancelAsk, onCancelPrompt, onCollapseAsk }}
-        {...{ permission, onRespondPermission, question, onAnswerQuestion, onCollapsePrompt }}
-        collapsedPrompt={collapsedPrompt}
-      />
+      <View style={styles.conversation}>
+        {status === 'loading' && messages.length === 0 ? (
+          <View style={styles.center}>
+            <ActivityIndicator color={colors.textSecondary} />
+          </View>
+        ) : (
+          <GestureHandlerRootView style={styles.listWrap}>
+            <MobileNativeChatDisclosureContext.Provider value={disclosures}>
+              <MobileNativeChatScrollHold headKey={turns.listMessages[0]?.id} listRef={listRef} />
+              <GestureDetector gesture={pinchGesture}>
+                <FlatList
+                  ref={listRef}
+                  data={history.listRows}
+                  keyExtractor={(item) => item.id}
+                  renderItem={history.renderListRow}
+                  contentContainerStyle={
+                    toolCallCount > 0 ? styles.listContentUnderFloatingControls : styles.listContent
+                  }
+                  // Let link/file taps land while the composer keyboard is up
+                  // instead of being swallowed by the dismiss gesture.
+                  keyboardShouldPersistTaps="handled"
+                  onScroll={onScroll}
+                  onScrollBeginDrag={beginUserScroll}
+                  onScrollEndDrag={endUserDrag}
+                  onMomentumScrollBegin={beginMomentum}
+                  onMomentumScrollEnd={endMomentum}
+                  scrollEventThrottle={32}
+                  onContentSizeChange={pinToTailAfterContentResize}
+                  onLayout={pinToTail}
+                  maintainVisibleContentPosition={mobileNativeChatRowAnchor(hasMore === true)}
+                  ListHeaderComponent={history.withHistory(
+                    mobileNativeChatListHeader(hasMore, loadingEarlier, loadEarlier)
+                  )}
+                  ListFooterComponent={mobileNativeChatListFooter(
+                    liveStatus,
+                    turns.waitingRows,
+                    renderItem
+                  )}
+                  ListEmptyComponent={emptyStateView}
+                />
+              </GestureDetector>
+            </MobileNativeChatDisclosureContext.Provider>
+            <MobileNativeChatFloatingControls
+              toolCallCount={toolCallCount}
+              toolsExpanded={toolsExpanded}
+              onToggleTools={toggleTools}
+              showJumpToTail={showJumpToTail}
+              onJumpToTail={jumpToTail}
+            />
+          </GestureHandlerRootView>
+        )}
+        <MobileNativeChatPromptCard
+          key={promptKey ?? undefined}
+          {...{
+            ask,
+            askKey,
+            onDismissAsk,
+            onAnswerAsk,
+            onCancelAsk,
+            onCancelPrompt,
+            onCollapseAsk
+          }}
+          {...{ permission, onRespondPermission, question, onAnswerQuestion, onCollapsePrompt }}
+          collapsedPrompt={collapsedPrompt}
+        />
+      </View>
       {sendErrorMessage ? (
         // This banner is the only channel for a send failure — announce it.
         <View
@@ -440,15 +450,8 @@ export function MobileNativeChatView({
         {...{ getSendCompletionGeneration, getComposerEditGeneration, inputRef }}
         agent={agent}
         sessionOptions={sessionOptions}
-        onAttachImage={onAttachImage}
-        attachments={attachments}
-        onRemoveAttachment={onRemoveAttachment}
-        isAttaching={isAttaching}
-        onMicPress={onMicPress}
-        micActive={micActive}
-        dictationMode={dictationMode}
-        onMicPressIn={onMicPressIn}
-        onMicPressOut={onMicPressOut}
+        {...{ onAttachImage, attachments, onRemoveAttachment, isAttaching }}
+        {...{ onMicPress, micActive, dictationMode, onMicPressIn, onMicPressOut }}
         disabled={lockReason !== null}
         sendDisabled={expandedPromptOwnsSend}
         placeholder={mobileNativeChatComposerPlaceholder(

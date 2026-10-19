@@ -9,6 +9,10 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bgBase
   },
+  conversation: {
+    flex: 1,
+    minHeight: 0
+  },
   sendError: {
     alignItems: 'center',
     paddingHorizontal: spacing.md,
@@ -48,6 +52,7 @@ export const styles = StyleSheet.create({
   },
   listWrap: {
     flex: 1,
+    minHeight: 0,
     position: 'relative'
   },
   listContent: {

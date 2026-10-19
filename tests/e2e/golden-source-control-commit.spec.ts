@@ -25,6 +25,9 @@ test('@golden stages and commits a file through Source Control', async ({
   const hookMarkerPath = installPassingNodePreCommitHook(fixture)
 
   await waitForSessionReady(orcaPage)
+  await orcaPage.evaluate(async () => {
+    await window.__store?.getState().updateSettings({ uiLanguage: 'en' })
+  })
   await openGoldenSourceControl(orcaPage, testRepoPath, fixture)
 
   const unstagedRow = orcaPage

@@ -83,7 +83,7 @@ export function MobileNativeChatPromptCard({
   // card keeps its selections.
   return (
     <>
-      <View style={collapsedPrompt ? styles.collapsed : undefined}>{card}</View>
+      <View style={[ask && styles.ask, collapsedPrompt && styles.collapsed]}>{card}</View>
       {collapsedPrompt ? (
         <MobileNativeChatPromptStrip
           title={collapsedPrompt.title}
@@ -94,4 +94,8 @@ export function MobileNativeChatPromptCard({
   )
 }
 
-const styles = StyleSheet.create({ collapsed: { display: 'none' } })
+const styles = StyleSheet.create({
+  // Keep transcript context visible within the space left above the composer and keyboard.
+  ask: { maxHeight: '50%', flexShrink: 1, minHeight: 0 },
+  collapsed: { display: 'none' }
+})
