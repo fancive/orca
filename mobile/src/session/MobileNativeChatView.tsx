@@ -354,44 +354,54 @@ export function MobileNativeChatView({
 
   return (
     <View style={[styles.root, { paddingBottom: bottomPad }]}>
-      {status === 'loading' && messages.length === 0 ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.textSecondary} />
-        </View>
-      ) : (
-        <GestureHandlerRootView style={styles.listWrap}>
-          <MobileNativeChatDisclosureContext.Provider value={disclosures}>
-            <MobileNativeChatScrollHold
-              {...{ rowKeys, layoutKey, ...tail.placeHold }}
-              roots={disclosures.roots}
-              runPlacements={rowKeys.runPlacements}
-            >
-              <GestureDetector gesture={pinchGesture}>
-                <MobileNativeChatRowList
-                  {...{ tail, rowKeys, renderItem, footer, emptyStateView, onScroll, layoutKey }}
-                  rows={turns.listMessages}
-                  roots={disclosures.roots}
-                  rowState={turns.resolveRow}
-                  contentContainerStyle={styles.listContent}
-                  header={pageHeader}
-                  nativeHeader={header}
-                  hasHeader={hasMore === true}
-                />
-              </GestureDetector>
-            </MobileNativeChatScrollHold>
-          </MobileNativeChatDisclosureContext.Provider>
-          <MobileNativeChatFloatingControls
-            showJumpToTail={tail.showJumpToTail}
-            onJumpToTail={jumpToTail}
-          />
-        </GestureHandlerRootView>
-      )}
-      <MobileNativeChatPromptCard
-        key={promptKey ?? undefined}
-        {...{ ask, askKey, onDismissAsk, onAnswerAsk, onCancelAsk, onCancelPrompt, onCollapseAsk }}
-        {...{ permission, onRespondPermission, question, onAnswerQuestion, onCollapsePrompt }}
-        collapsedPrompt={collapsedPrompt}
-      />
+      <View style={styles.conversation}>
+        {status === 'loading' && messages.length === 0 ? (
+          <View style={styles.center}>
+            <ActivityIndicator color={colors.textSecondary} />
+          </View>
+        ) : (
+          <GestureHandlerRootView style={styles.listWrap}>
+            <MobileNativeChatDisclosureContext.Provider value={disclosures}>
+              <MobileNativeChatScrollHold
+                {...{ rowKeys, layoutKey, ...tail.placeHold }}
+                roots={disclosures.roots}
+                runPlacements={rowKeys.runPlacements}
+              >
+                <GestureDetector gesture={pinchGesture}>
+                  <MobileNativeChatRowList
+                    {...{ tail, rowKeys, renderItem, footer, emptyStateView, onScroll, layoutKey }}
+                    rows={turns.listMessages}
+                    roots={disclosures.roots}
+                    rowState={turns.resolveRow}
+                    contentContainerStyle={styles.listContent}
+                    header={pageHeader}
+                    nativeHeader={header}
+                    hasHeader={hasMore === true}
+                  />
+                </GestureDetector>
+              </MobileNativeChatScrollHold>
+            </MobileNativeChatDisclosureContext.Provider>
+            <MobileNativeChatFloatingControls
+              showJumpToTail={tail.showJumpToTail}
+              onJumpToTail={jumpToTail}
+            />
+          </GestureHandlerRootView>
+        )}
+        <MobileNativeChatPromptCard
+          key={promptKey ?? undefined}
+          {...{
+            ask,
+            askKey,
+            onDismissAsk,
+            onAnswerAsk,
+            onCancelAsk,
+            onCancelPrompt,
+            onCollapseAsk
+          }}
+          {...{ permission, onRespondPermission, question, onAnswerQuestion, onCollapsePrompt }}
+          collapsedPrompt={collapsedPrompt}
+        />
+      </View>
       {sendErrorMessage ? (
         // This banner is the only channel for a send failure — announce it.
         <View
@@ -413,15 +423,8 @@ export function MobileNativeChatView({
         {...{ getSendCompletionGeneration, getComposerEditGeneration, inputRef }}
         agent={agent}
         sessionOptions={sessionOptions}
-        onAttachImage={onAttachImage}
-        attachments={attachments}
-        onRemoveAttachment={onRemoveAttachment}
-        isAttaching={isAttaching}
-        onMicPress={onMicPress}
-        micActive={micActive}
-        dictationMode={dictationMode}
-        onMicPressIn={onMicPressIn}
-        onMicPressOut={onMicPressOut}
+        {...{ onAttachImage, attachments, onRemoveAttachment, isAttaching }}
+        {...{ onMicPress, micActive, dictationMode, onMicPressIn, onMicPressOut }}
         disabled={lockReason !== null}
         sendDisabled={expandedPromptOwnsSend}
         placeholder={mobileNativeChatComposerPlaceholder(
