@@ -1,5 +1,6 @@
 export const PROMPT_QUESTION =
   'How should the workspace retain its split layout when a document is closed and later opened again? Choose the behavior that fits the task.'
+export const PROMPT_SECOND_QUESTION = 'Where should this apply?'
 
 export function nativeChatPromptViewportFixture({ chatViewModule, clientContextModule }) {
   return `
@@ -28,7 +29,7 @@ const question = {
     }
   ]
 }
-const prompt = { questions: params.has('steps') ? [question, { ...question, header: 'Details' }] : [question] }
+const prompt = { questions: params.has('steps') ? [question, { ...question, header: 'Details', question: ${JSON.stringify(PROMPT_SECOND_QUESTION)} }] : [question] }
 const context = Array.from({ length: 10 }, (_, index) => ({
   id: 'context-' + index,
   role: 'assistant',

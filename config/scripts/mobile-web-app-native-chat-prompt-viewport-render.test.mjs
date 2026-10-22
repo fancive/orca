@@ -13,7 +13,8 @@ import { mobileWebAppDependenciesPresent } from './mobile-web-app-bundle-depende
 import { createBundleServer, projectDir } from './mobile-web-app-render-harness.mjs'
 import {
   nativeChatPromptViewportFixture,
-  PROMPT_QUESTION
+  PROMPT_QUESTION,
+  PROMPT_SECOND_QUESTION
 } from './mobile-web-app-native-chat-prompt-viewport-fixture.mjs'
 
 const bundles = mobileWebAppDependenciesPresent()
@@ -87,7 +88,7 @@ async function openPrompt(viewport, query = '') {
   return { page, errors }
 }
 
-async function readPromptLayout(page, footerLabel = 'Submit') {
+async function readPromptLayout(page, footerLabel = 'Submit', question = PROMPT_QUESTION) {
   return page.evaluate(
     ({ question, footerLabel }) => {
       const rect = (node) => {
@@ -99,6 +100,7 @@ async function readPromptLayout(page, footerLabel = 'Submit') {
           top,
           bottom,
           height,
+          scrollTop: node.scrollTop,
           scrollHeight: node.scrollHeight,
           clientHeight: node.clientHeight
         }
@@ -122,6 +124,7 @@ async function readPromptLayout(page, footerLabel = 'Submit') {
       return {
         chat: rect(chat),
         prompt: viewport,
+        question: rect(questionText),
         bodyVisibleHeight: Math.max(
           0,
           Math.min(body.bottom, viewport.bottom) - Math.max(body.top, viewport.top)
@@ -135,7 +138,7 @@ async function readPromptLayout(page, footerLabel = 'Submit') {
         viewportHeight: innerHeight
       }
     },
-    { question: PROMPT_QUESTION, footerLabel }
+    { question, footerLabel }
   )
 }
 
@@ -192,7 +195,16 @@ describeRender('native chat question cards in a constrained viewport', () => {
         'tabs leave at least 44 units for the question'
       ).toBeGreaterThanOrEqual(44)
       await page.getByText('Persist across reload', { exact: true }).click()
+      if (footerInScroll) {
+        expect(await scrollQuestionToEnd(page)).toBeGreaterThan(0)
+      }
       await page.getByText('Next', { exact: true }).click()
+      await page.getByText(PROMPT_SECOND_QUESTION, { exact: true }).waitFor()
+      const next = await readPromptLayout(page, 'Submit', PROMPT_SECOND_QUESTION)
+      await recordLayout(page, `375-${height}-steps-next`, next)
+      expect(next.prompt.scrollTop, 'each new question starts at the top').toBe(0)
+      expect(next.question.top).toBeGreaterThanOrEqual(next.prompt.top)
+      expect(next.question.bottom).toBeLessThanOrEqual(next.prompt.bottom)
       await page.getByText('Session only', { exact: true }).click()
       await page.getByText('Submit', { exact: true }).click()
       expect(await page.evaluate(() => globalThis.__orcaPromptViewportAnswers)).toEqual([

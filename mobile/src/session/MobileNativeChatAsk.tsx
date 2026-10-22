@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { Check } from 'lucide-react-native'
 import type { AskAnswerSelection, AskPrompt } from '../../../src/shared/native-chat-ask'
@@ -33,6 +33,10 @@ export function MobileNativeChatAsk({
   onCollapse
 }: Props): React.JSX.Element {
   const [index, setIndex] = useState(0)
+  const scrollRef = useRef<ScrollView>(null)
+  useLayoutEffect(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false })
+  }, [index])
   const [selections, setSelections] = useState<number[][]>(() => prompt.questions.map(() => []))
   const [otherText, setOtherText] = useState<string[]>(() => prompt.questions.map(() => ''))
   const [submitting, setSubmitting] = useState(false)
@@ -179,7 +183,7 @@ export function MobileNativeChatAsk({
       style={styles.card}
       onLayout={(event) => recordHeight('card', event.nativeEvent.layout.height)}
     >
-      <ScrollView style={styles.scroll} keyboardShouldPersistTaps="always">
+      <ScrollView ref={scrollRef} style={styles.scroll} keyboardShouldPersistTaps="always">
         {total > 1 ? (
           <ScrollView
             horizontal
