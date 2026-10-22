@@ -114,9 +114,18 @@ async function readPromptLayout(page, footerLabel = 'Submit') {
       const cancel = [...document.querySelectorAll('*')].find(
         (node) => node.childElementCount === 0 && node.textContent === 'Cancel'
       )
+      const questionText = [...document.querySelectorAll('*')].find(
+        (node) => node.childElementCount === 0 && node.textContent === question
+      )
+      const body = rect(questionText?.parentElement?.parentElement)
+      const viewport = rect(prompt)
       return {
         chat: rect(chat),
-        prompt: rect(prompt),
+        prompt: viewport,
+        bodyVisibleHeight: Math.max(
+          0,
+          Math.min(body.bottom, viewport.bottom) - Math.max(body.top, viewport.top)
+        ),
         footerInScroll: prompt.contains(text?.parentElement),
         footer: rect(text?.parentElement?.parentElement),
         submit: rect(text?.parentElement),
@@ -154,8 +163,7 @@ const CASES = [
   { width: 375, height: 650, keyboard: 0 },
   { width: 315, height: 540, keyboard: 0 },
   { width: 375, height: 350, keyboard: 0 },
-  { width: 375, height: 650, keyboard: 300 },
-  { width: 375, height: 350, keyboard: 0, steps: true }
+  { width: 375, height: 650, keyboard: 300 }
 ]
 
 const INSET_CASES = [
@@ -165,6 +173,38 @@ const INSET_CASES = [
 ]
 
 describeRender('native chat question cards in a constrained viewport', () => {
+  it.each([
+    { height: 350, footerInScroll: true },
+    { height: 428, footerInScroll: true },
+    { height: 430, footerInScroll: false }
+  ])('accounts for question tabs at height $height', async ({ height, footerInScroll }) => {
+    const { page, errors } = await openPrompt({ width: 375, height }, '?steps=2')
+    try {
+      const initial = await readPromptLayout(page, 'Next')
+      await recordLayout(page, `375-${height}-steps-body-initial`, initial)
+      await expect
+        .poll(async () => (await readPromptLayout(page, 'Next')).footerInScroll)
+        .toBe(footerInScroll)
+      const layout = await readPromptLayout(page, 'Next')
+      await recordLayout(page, `375-${height}-steps-body`, layout)
+      expect(
+        layout.bodyVisibleHeight,
+        'tabs leave at least 44 units for the question'
+      ).toBeGreaterThanOrEqual(44)
+      await page.getByText('Persist across reload', { exact: true }).click()
+      await page.getByText('Next', { exact: true }).click()
+      await page.getByText('Session only', { exact: true }).click()
+      await page.getByText('Submit', { exact: true }).click()
+      expect(await page.evaluate(() => globalThis.__orcaPromptViewportAnswers)).toEqual([
+        { indices: [0] },
+        { indices: [1] }
+      ])
+      expect(errors).toEqual([])
+    } finally {
+      await page.close()
+    }
+  })
+
   it.each(INSET_CASES)(
     'keeps a readable question with safe area $bottom, keyboard $keyboard and session chrome $chrome',
     async ({ width, height, keyboard, bottom, chrome }) => {
@@ -257,30 +297,38 @@ describeRender('native chat question cards in a constrained viewport', () => {
     }
   )
 
-  it('returns to a fixed footer when space grows and settles again when it shrinks', async () => {
-    const { page, errors } = await openPrompt(
-      { width: 375, height: 650 },
-      '?keyboard=300&bottom=34&chrome=88'
-    )
-    try {
-      expect((await readPromptLayout(page)).footerInScroll).toBe(true)
-      await page.setViewportSize({ width: 375, height: 950 })
-      await expect.poll(async () => (await readPromptLayout(page)).footerInScroll).toBe(false)
-      const expanded = await readPromptLayout(page)
-      expect(expanded.prompt.height).toBeGreaterThanOrEqual(44)
-      expect(expanded.footer.bottom).toBeLessThanOrEqual(expanded.composer.top)
-      await page.setViewportSize({ width: 375, height: 650 })
-      await expect.poll(async () => (await readPromptLayout(page)).footerInScroll).toBe(true)
-      const settled = await readPromptLayout(page)
-      for (let frame = 0; frame < 4; frame++) {
-        await page.evaluate(() => new Promise(requestAnimationFrame))
-        expect(await readPromptLayout(page)).toEqual(settled)
+  it.each(['', '&steps=2'])(
+    'returns to a fixed footer when space grows and settles again when it shrinks, with %s',
+    async (steps) => {
+      const footerLabel = steps ? 'Next' : 'Submit'
+      const { page, errors } = await openPrompt(
+        { width: 375, height: 650 },
+        `?keyboard=300&bottom=34&chrome=88${steps}`
+      )
+      try {
+        expect((await readPromptLayout(page, footerLabel)).footerInScroll).toBe(true)
+        await page.setViewportSize({ width: 375, height: 950 })
+        await expect
+          .poll(async () => (await readPromptLayout(page, footerLabel)).footerInScroll)
+          .toBe(false)
+        const expanded = await readPromptLayout(page, footerLabel)
+        expect(expanded.prompt.height).toBeGreaterThanOrEqual(44)
+        expect(expanded.footer.bottom).toBeLessThanOrEqual(expanded.composer.top)
+        await page.setViewportSize({ width: 375, height: 650 })
+        await expect
+          .poll(async () => (await readPromptLayout(page, footerLabel)).footerInScroll)
+          .toBe(true)
+        const settled = await readPromptLayout(page, footerLabel)
+        for (let frame = 0; frame < 4; frame++) {
+          await page.evaluate(() => new Promise(requestAnimationFrame))
+          expect(await readPromptLayout(page, footerLabel)).toEqual(settled)
+        }
+        expect(errors).toEqual([])
+      } finally {
+        await page.close()
       }
-      expect(errors).toEqual([])
-    } finally {
-      await page.close()
     }
-  })
+  )
 
   it('keeps a short question compact instead of filling half the conversation', async () => {
     const { page, errors } = await openPrompt({ width: 375, height: 900 }, '?short=1')

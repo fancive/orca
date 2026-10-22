@@ -38,8 +38,8 @@ export function MobileNativeChatAsk({
   const [submitting, setSubmitting] = useState(false)
   const submittingRef = useRef(false)
   const autoAdvance = useMobileNativeChatAskAutoAdvance()
-  const [layout, setLayout] = useState({ card: 0, footer: 0 })
-  const recordHeight = (part: 'card' | 'footer', height: number): void => {
+  const [layout, setLayout] = useState({ card: 0, footer: 0, tabs: 0 })
+  const recordHeight = (part: 'card' | 'footer' | 'tabs', height: number): void => {
     setLayout((previous) =>
       height > 0 && previous[part] !== height ? { ...previous, [part]: height } : previous
     )
@@ -48,7 +48,7 @@ export function MobileNativeChatAsk({
   const scrollFooter =
     layout.card > 0 &&
     layout.footer > 0 &&
-    layout.card - layout.footer - StyleSheet.hairlineWidth < MIN_ASK_BODY_HEIGHT
+    layout.card - layout.footer - layout.tabs - StyleSheet.hairlineWidth < MIN_ASK_BODY_HEIGHT
 
   // A single-select option answers the question, so the card moves on after a beat that shows
   // it chosen; "Other…" still needs its text.
@@ -186,6 +186,7 @@ export function MobileNativeChatAsk({
             showsHorizontalScrollIndicator={false}
             style={styles.tabs}
             contentContainerStyle={styles.tabsContent}
+            onLayout={(event) => recordHeight('tabs', event.nativeEvent.layout.height)}
             keyboardShouldPersistTaps="always"
           >
             {prompt.questions.map((qq, i) => (
